@@ -13079,7 +13079,7 @@ P5: [
             utterance.onend = () => {
                 index++;
                 if (index < audioQueue.length && !isPaused) {
-                    audioTimeout = setTimeout(playNext, gapSec * 300);
+                    audioTimeout = setTimeout(playNext, gapSec * 1000);
                 } else if (index >= audioQueue.length) {
                     stopAllAudio();
                 }
@@ -13087,7 +13087,7 @@ P5: [
             utterance.onerror = () => {
                 index++;
                 if (index < audioQueue.length && !isPaused) {
-                    audioTimeout = setTimeout(playNext, gapSec * 300);
+                    audioTimeout = setTimeout(playNext, gapSec * 1000);
                 }
             };
             speechSynthesis.speak(utterance);
