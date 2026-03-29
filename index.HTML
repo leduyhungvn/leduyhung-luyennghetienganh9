@@ -453,30 +453,28 @@
 <div class="app-container" id="app"></div>
 <script>
     // =====================================================
-    // HỆ THỐNG TỰ ĐỘNG THU THẬP CÁC BÀI HỌC
-    // Chỉ cần khai báo biến với tên theo mẫu E{lop}_U{unit}_B{bai}
-    // Ví dụ: var E9_U1_B2 = { ... }; là đủ.
+    // HỆ THỐNG TỰ ĐỘNG THU THẬP CÁC BÀI HỌC (LỚP 9)
+    // Chỉ cần khai báo biến với tên theo mẫu E9_U{unit}_B{bai}
     // =====================================================
 
     // Registry chứa tất cả các bài học
     window.LESSON_REGISTRY = {};
 
-    // Hàm quét window để tìm các biến có tên dạng E..._U..._B...
+    // Hàm quét window để tìm các biến có tên dạng E9_..._...
     function scanLessons() {
-        const lessonRegex = /^E(\d+)_U(\d+)_B(\d+)$/; // ví dụ E9_U1_B2
+        const lessonRegex = /^E9_U(\d+)_B(\d+)$/; // Lớp 9
         for (let key in window) {
             if (window.hasOwnProperty(key)) {
                 const match = key.match(lessonRegex);
                 if (match) {
-                    const lop = match[1]; // lớp, ví dụ "9"
-                    const unit = match[2]; // unit, ví dụ "1"
-                    const bai = match[3];  // bài, ví dụ "2"
+                    const unit = match[1]; // unit, ví dụ "1"
+                    const bai = match[2];  // bài, ví dụ "2"
                     const data = window[key];
                     // Kiểm tra xem data có cấu trúc bài học không (có P1, P2,...)
                     if (data && typeof data === 'object' && data.P1 !== undefined) {
-                        if (!LESSON_REGISTRY[lop]) LESSON_REGISTRY[lop] = {};
-                        if (!LESSON_REGISTRY[lop][`U${unit}`]) LESSON_REGISTRY[lop][`U${unit}`] = {};
-                        LESSON_REGISTRY[lop][`U${unit}`][`B${bai}`] = data;
+                        if (!LESSON_REGISTRY['9']) LESSON_REGISTRY['9'] = {};
+                        if (!LESSON_REGISTRY['9'][`U${unit}`]) LESSON_REGISTRY['9'][`U${unit}`] = {};
+                        LESSON_REGISTRY['9'][`U${unit}`][`B${bai}`] = data;
                     }
                 }
             }
@@ -484,9 +482,10 @@
     }
 
     // =====================================================
-    // KHAI BÁO DỮ LIỆU CÁC BÀI (đã copy từ lớp 6, chỉ đổi tên biến)
-    // Bạn có thể thêm bất kỳ bài nào theo mẫu, hệ thống tự nhận
+    // KHAI BÁO DỮ LIỆU CÁC BÀI (chuyển từ lớp 8 sang lớp 9, giữ nội dung)
     // =====================================================
+
+    // ---------- UNIT 1 BÀI 1 ---------- (Giữ nguyên dữ liệu)
 
 var E9_U1_B1 = {
 P1: [ // trắc nghiệm trả lời câu hỏi
@@ -12952,15 +12951,11 @@ P5: [
 
 
 
-    // =====================================================
-    // BỔ SUNG TẤT CẢ CÁC BIẾN TỪ E9_U1_B4 ĐẾN E9_U12_B20
-    // (các biến đã tồn tại sẽ được giữ nguyên, chỉ thêm mới nếu chưa có)
-    // =====================================================
-    (function initAllLessons() {
-        for (let unit = 1; unit <= 12; unit++) {
+    // ---------- UNIT 2 đến UNIT 12, mỗi unit 20 bài rỗng ----------
+    (function createEmptyLessons() {
+        for (let unit = 2; unit <= 12; unit++) {
             for (let bai = 1; bai <= 20; bai++) {
                 let varName = 'E9_U' + unit + '_B' + bai;
-                // Nếu biến chưa tồn tại thì khởi tạo với cấu trúc rỗng
                 if (typeof window[varName] === 'undefined') {
                     window[varName] = {
                         P1: [],
@@ -12974,37 +12969,51 @@ P5: [
         }
     })();
 
-    // Quét lại registry sau khi đã khởi tạo tất cả
+    // Quét registry sau khi khai báo tất cả
     scanLessons();
 
     // =====================================================
-    // HÀM KIỂM TRA BÀI HỢP LỆ (CÓ DỮ LIỆU)
+    // HÀM SẮP XẾP GIỌNG THEO NỀN TẢNG
     // =====================================================
-    function isLessonValid(lesson) {
-        return (lesson.P1 && lesson.P1.length > 0) ||
-               (lesson.P2 && lesson.P2.length > 0) ||
-               (lesson.P3 && lesson.P3.length > 0) ||
-               (lesson.P4 && lesson.P4 !== "Chưa có nội dung");
+    function sortVoicesByPlatform(voices) {
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isIOS) {
+            // Đưa giọng Samantha lên đầu (nếu có)
+            const samanthaIndex = voices.findIndex(v => v.name.toLowerCase().includes('samantha'));
+            if (samanthaIndex !== -1) {
+                const samantha = voices[samanthaIndex];
+                const otherVoices = voices.filter((_, idx) => idx !== samanthaIndex);
+                return [samantha, ...otherVoices];
+            }
+            return voices;
+        } else {
+            // Desktop / Android: ưu tiên Google, Microsoft lên đầu
+            const googleVoices = voices.filter(v => v.name.toLowerCase().includes('google'));
+            const microsoftVoices = voices.filter(v => v.name.toLowerCase().includes('microsoft'));
+            const otherVoices = voices.filter(v => !v.name.toLowerCase().includes('google') && !v.name.toLowerCase().includes('microsoft'));
+            return [...googleVoices, ...microsoftVoices, ...otherVoices];
+        }
     }
 
     // =====================================================
-    // CÁC BIẾN VÀ HÀM XỬ LÝ (dùng LESSON_REGISTRY)
+    // CÁC BIẾN VÀ HÀM XỬ LÝ (dùng LESSON_REGISTRY, lớp 9)
     // =====================================================
-    const UNIT_ITEMS = ['UNIT 1','UNIT 2','UNIT 3','UNIT 4','UNIT 5','UNIT 6','UNIT 7','UNIT 8','UNIT 9','UNIT 10','UNIT 11','UNIT 12'];
+    const UNIT_ITEMS = [];
+    for (let i = 1; i <= 12; i++) UNIT_ITEMS.push(`UNIT ${i}`);
+    
     const BAI_ITEMS = ['KIỂM TRA NGẪU NHIÊN', ...Array.from({ length: 20 }, (_, i) => `BÀI ${i+1}`)];
-    // Thêm dạng tổng hợp lên đầu
     const DANG_BAI = ['TRẮC NGHIỆM TỔNG HỢP', 'TRẮC NGHIỆM TRẢ LỜI CÂU HỎI', 'TRẮC NGHIỆM TRUE – FALSE – NOT GIVEN', 'TRẮC NGHIỆM ĐIỀN KHUYẾT'];
 
     let currentScreen = 'main';
     let studentName = '';
     let selectedUnit = 'UNIT 1';
     let selectedBai = 'KIỂM TRA NGẪU NHIÊN';
-    let selectedDang = DANG_BAI[0]; // mặc định là tổng hợp
+    let selectedDang = DANG_BAI[0];
     let quizData = null;
     let userAnswers = [];
     let startTime = null;
     let endTime = null;
-    let currentLessonData = null; // lưu raw data của bài đang làm (để đọc P5)
+    let currentLessonData = null;
 
     let voiceList = [];
     let voiceMode = 1;
@@ -13018,7 +13027,7 @@ P5: [
 
     const app = document.getElementById('app');
 
-    // ---------- HÀM PHÁT ÂM (đã sửa để xử lý dấu gạch dưới) ----------
+    // ---------- HÀM PHÁT ÂM (giữ nguyên) ----------
     function stopAllAudio() {
         speechSynthesis.cancel();
         if (audioTimeout) {
@@ -13079,7 +13088,7 @@ P5: [
             utterance.onend = () => {
                 index++;
                 if (index < audioQueue.length && !isPaused) {
-                    audioTimeout = setTimeout(playNext, gapSec * 1000);
+                    audioTimeout = setTimeout(playNext, gapSec * 500);
                 } else if (index >= audioQueue.length) {
                     stopAllAudio();
                 }
@@ -13087,7 +13096,7 @@ P5: [
             utterance.onerror = () => {
                 index++;
                 if (index < audioQueue.length && !isPaused) {
-                    audioTimeout = setTimeout(playNext, gapSec * 1000);
+                    audioTimeout = setTimeout(playNext, gapSec * 500);
                 }
             };
             speechSynthesis.speak(utterance);
@@ -13095,34 +13104,28 @@ P5: [
         playNext();
     }
 
-    // Hàm phụ trợ: tách câu thành các phần text và blank
     function splitTextWithUnderscores(text) {
         const parts = [];
         let lastIndex = 0;
         const regex = /_+/g;
         let match;
         while ((match = regex.exec(text)) !== null) {
-            // Phần text trước dấu gạch dưới
             if (match.index > lastIndex) {
                 parts.push({ type: 'text', content: text.substring(lastIndex, match.index) });
             }
-            // Phần gạch dưới
             parts.push({ type: 'blank', content: match[0] });
             lastIndex = match.index + match[0].length;
         }
-        // Phần text còn lại sau dấu gạch dưới cuối cùng
         if (lastIndex < text.length) {
             parts.push({ type: 'text', content: text.substring(lastIndex) });
         }
         return parts;
     }
 
-    // Hàm phát âm một câu (đã sửa)
     function speakSingleText(text, id) {
         if (!text || text.trim() === '') return;
         const parts = splitTextWithUnderscores(text);
         
-        // Nếu không có blank, đọc bình thường
         if (parts.length === 1 && parts[0].type === 'text') {
             speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
@@ -13133,7 +13136,6 @@ P5: [
             return;
         }
 
-        // Hủy mọi phát âm đang thực hiện
         speechSynthesis.cancel();
 
         let currentIndex = 0;
@@ -13143,7 +13145,7 @@ P5: [
             const part = parts[currentIndex];
             let textToSpeak = part.content;
             if (part.type === 'blank') {
-                textToSpeak = 'blank'; // thay dấu gạch dưới bằng từ "blank"
+                textToSpeak = 'blank';
             }
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             utterance.lang = 'en-GB';
@@ -13153,15 +13155,12 @@ P5: [
             utterance.onend = () => {
                 currentIndex++;
                 if (part.type === 'blank') {
-                    // Sau khi đọc "blank", chờ 0.5 giây rồi đọc tiếp
                     setTimeout(speakNext, 300);
                 } else {
-                    // Đọc phần tiếp theo ngay lập tức
                     speakNext();
                 }
             };
             utterance.onerror = () => {
-                // Nếu lỗi vẫn tiếp tục (tránh treo)
                 currentIndex++;
                 if (part.type === 'blank') {
                     setTimeout(speakNext, 300);
@@ -13178,13 +13177,11 @@ P5: [
     function populateVoiceList() {
         if (!('speechSynthesis' in window)) return;
         const voices = speechSynthesis.getVoices();
-        voiceList = voices;
-
+        voiceList = sortVoicesByPlatform(voices);
         const davidVoice = voiceList.find(v => 
             v.name.toLowerCase().includes('david') && 
             (v.lang.includes('en-GB') || v.lang.includes('en-US'))
         );
-
         updateVoiceDropdowns(davidVoice);
     }
 
@@ -13227,39 +13224,42 @@ P5: [
         }
     }
 
-    // ---------- HÀM CHUẨN BỊ DỮ LIỆU (dùng LESSON_REGISTRY) ----------
+    // ---------- HÀM KIỂM TRA BÀI HỢP LỆ (CÓ DỮ LIỆU) ----------
+    function isLessonValid(lesson) {
+        return (lesson.P1 && lesson.P1.length > 0) ||
+               (lesson.P2 && lesson.P2.length > 0) ||
+               (lesson.P3 && lesson.P3.length > 0) ||
+               (lesson.P4 && lesson.P4 !== "Chưa có nội dung");
+    }
+
+    // ---------- HÀM CHUẨN BỊ DỮ LIỆU (lớp 9) ----------
     function prepareQuizData() {
         const unitKey = selectedUnit.replace('UNIT ', 'U'); // "U1"
         let baiNumber = null;
         let rawData = null;
 
         if (selectedBai === 'KIỂM TRA NGẪU NHIÊN') {
-            // Lấy danh sách các bài có trong unit hiện tại (chỉ xét lớp 9, có thể mở rộng sau)
-            const lop = '9'; // mặc định lớp 9
-            const unitLessons = LESSON_REGISTRY[lop]?.[unitKey];
+            const unitLessons = LESSON_REGISTRY['9']?.[unitKey];
             if (!unitLessons) {
                 alert(`Unit ${selectedUnit} chưa có bài nào.`);
                 return false;
             }
-            const availableBais = Object.keys(unitLessons); // ["B1","B2",...]
-            // Lọc những bài có dữ liệu hợp lệ
+            const availableBais = Object.keys(unitLessons);
             const validBais = availableBais.filter(b => isLessonValid(unitLessons[b]));
             if (validBais.length === 0) {
                 alert(`Unit ${selectedUnit} chưa có bài nào có dữ liệu.`);
                 return false;
             }
             const randomBai = validBais[Math.floor(Math.random() * validBais.length)];
-            baiNumber = randomBai.substring(1); // lấy số
+            baiNumber = randomBai.substring(1);
             rawData = unitLessons[randomBai];
         } else {
             baiNumber = selectedBai.replace('BÀI ', '');
-            const lop = '9';
-            rawData = LESSON_REGISTRY[lop]?.[unitKey]?.[`B${baiNumber}`];
+            rawData = LESSON_REGISTRY['9']?.[unitKey]?.[`B${baiNumber}`];
             if (!rawData) {
                 alert(`Không tìm thấy dữ liệu cho ${selectedUnit} - ${selectedBai}.`);
                 return false;
             }
-            // Kiểm tra bài có dữ liệu không (nếu không phải ngẫu nhiên)
             if (!isLessonValid(rawData)) {
                 alert(`Bài ${selectedBai} trong ${selectedUnit} chưa có nội dung.`);
                 return false;
@@ -13271,18 +13271,17 @@ P5: [
             return false;
         }
 
-        currentLessonData = rawData; // lưu lại để dùng trong phát âm
+        currentLessonData = rawData;
 
         let questionPool = [];
-        let numberOfQuestions = 5; // mặc định cho các dạng riêng
+        let numberOfQuestions = 5;
 
         if (selectedDang === 'TRẮC NGHIỆM TỔNG HỢP') {
-            // Gộp tất cả câu hỏi từ P1, P2, P3
             const p1 = rawData.P1 || [];
             const p2 = rawData.P2 || [];
             const p3 = rawData.P3 || [];
             questionPool = [...p1, ...p2, ...p3];
-            numberOfQuestions = 10; // tổng hợp lấy 10 câu
+            numberOfQuestions = 10;
         } else if (selectedDang.includes('TRẮC NGHIỆM TRẢ LỜI CÂU HỎI')) {
             questionPool = rawData.P1 || [];
         } else if (selectedDang.includes('TRUE – FALSE')) {
@@ -13296,13 +13295,11 @@ P5: [
             return false;
         }
 
-        // Xáo trộn và lấy numberOfQuestions câu
         const shuffled = [...questionPool].sort(() => 0.5 - Math.random());
         const selected = shuffled.slice(0, Math.min(numberOfQuestions, shuffled.length));
 
         quizData = selected.map(q => {
             let opts = [q.correct, q.wrong1, q.wrong2];
-            // Xáo trộn đáp án
             for (let i = opts.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [opts[i], opts[j]] = [opts[j], opts[i]];
@@ -13317,7 +13314,7 @@ P5: [
         return true;
     }
 
-    // ---------- RENDER CÁC MÀN HÌNH (giữ nguyên logic cũ, chỉ sửa cách lấy P5) ----------
+    // ---------- RENDER CÁC MÀN HÌNH (giữ nguyên logic, chỉ sửa tên lớp) ----------
     function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
     function renderMain() {
@@ -13372,6 +13369,10 @@ P5: [
                         <option value="4">4s</option>
                         <option value="5">5s</option>
                         <option value="6">6s</option>
+                        <option value="7">7s</option>
+                        <option value="8">8s</option>
+                        <option value="9">9s</option>
+                        <option value="10">10s</option>
                     </select>
                     <select id="loopCountSelect">
                         <option value="1" selected>1 lần</option>
@@ -13577,14 +13578,20 @@ P5: [
                 <div id="passageContainer" style="display:none;" class="hidden-passage">${passageText}</div>
                 
                 <h3>📋 Chi tiết câu hỏi</h3>
-                <table><tr><th>STT</th><th>Nội dung</th><th>Đáp án chọn</th><th>Đáp án đúng</th></tr>`;
+                 <table>
+                    <thead>
+                         <tr><th>STT</th><th>Nội dung</th><th>Đáp án chọn</th><th>Đáp án đúng</th></tr>
+                    </thead>
+                    <tbody>`;
         quizData.forEach((q,i)=>{
             let chosen = userAnswers[i]?.chosen || '—';
             let correct = q.correct;
             let wrongClass = (chosen !== correct) ? 'wrong-answer' : '';
             html += `<tr><td>${i+1}</td><td>${q.question}</td><td class="${wrongClass}">${chosen}</td><td><span class="correct-answer">${correct}</span></td></tr>`;
         });
-        html += `</table><br>
+        html += `</tbody>
+                  </table>
+                <br>
                 <div class="action-buttons-container">
                     <button class="btn-back" id="backToMainBtnReport">◀ QUAY LẠI</button>
                     <a href="#" class="scroll-top" id="scrollTopReport">⬆️</a>
@@ -13592,7 +13599,7 @@ P5: [
             </div>`;
         app.innerHTML = html;
 
-        // Xử lý voice dropdowns trong report
+        // Xử lý voice dropdowns trong report (giống quiz)
         if (voiceList.length) {
             const davidVoice = voiceList.find(v => 
                 v.name.toLowerCase().includes('david') && 
@@ -13625,11 +13632,13 @@ P5: [
         const modeSel = document.getElementById('voiceModeSelectReport');
         const singleDiv = document.getElementById('singleVoiceContainerReport');
         const dualDiv = document.getElementById('dualVoiceContainerReport');
-        modeSel.addEventListener('change', e => {
-            voiceMode = parseInt(e.target.value);
-            singleDiv.style.display = voiceMode === 1 ? 'flex' : 'none';
-            dualDiv.style.display = voiceMode === 2 ? 'flex' : 'none';
-        });
+        if (modeSel) {
+            modeSel.addEventListener('change', e => {
+                voiceMode = parseInt(e.target.value);
+                singleDiv.style.display = voiceMode === 1 ? 'flex' : 'none';
+                dualDiv.style.display = voiceMode === 2 ? 'flex' : 'none';
+            });
+        }
         document.getElementById('voiceSelectReport')?.addEventListener('change', e => {
             singleVoice = e.target.value ? voiceList.find(v => v.voiceURI === e.target.value) : null;
         });
